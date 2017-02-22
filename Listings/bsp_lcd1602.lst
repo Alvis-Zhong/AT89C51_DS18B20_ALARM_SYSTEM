@@ -1,0 +1,322 @@
+C51 COMPILER V9.56.0.0   BSP_LCD1602                                                       02/22/2017 17:59:04 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE BSP_LCD1602
+OBJECT MODULE PLACED IN .\Objects\bsp_lcd1602.obj
+COMPILER INVOKED BY: D:\51Keil_v5\C51\BIN\C51.EXE LCD1602\bsp_lcd1602.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\DS18B20;.\LCD1
+                    -602;..\BSP;.\key_set;.\Warning) DEBUG OBJECTEXTEND PRINT(.\Listings\bsp_lcd1602.lst) OBJECT(.\Objects\bsp_lcd1602.obj)
+
+line level    source
+
+   1          /*******************************************************************
+   2                  ************************************************************
+   3                  *
+   4                  *@file     bsp_lcd1602.c
+   5                  *@author   Bin
+   6                  *@data     2017.02
+   7                  *@brief    LCD1602µÄÇý¶¯Ä£¿é
+   8                  *
+   9                  *************************************************************
+  10          *********************************************************************/
+  11          
+  12          #include "bsp_lcd1602.h"
+  13          
+  14          uchar code df_Table[]=
+  15          {
+  16                  0,1,1,2,3,3,4,4,5,6,6,7,8,8,9,9
+  17          };
+  18          
+  19          uchar title_1[13] = {"Current Temp:"} ;
+  20          uchar title_2[14] = {"Max safe Temp:"} ;
+  21          uchar title_3[14] = {"Min safe Temp:"} ;
+  22          
+  23          uchar convert_value[4] = {0,0,0,0} ;
+  24          uchar convert_max[4] = {0,0,0,0} ;
+  25          uchar convert_min[4] = {0,0,0,0} ;
+  26          
+  27          extern uchar temp_value[] ;
+  28          extern bit read_temp_is_ok ;
+  29          extern uchar Display_status[] ;
+  30          extern uchar max_safe_number ;
+  31          extern uchar min_safe_number ;
+  32          extern uchar dis_type ;
+  33          
+  34          uchar current_temp ; 
+  35          
+  36          /****************************************************************************************
+  37                  *@brief         ¼òµ¥µÄÈí¼þÑÓÊ±º¯Êý
+  38                  *@param         ÐÎ²ÎcÓÃÓÚÉèÖÃÑÓÊ±µÄ³¤¶Ì
+  39                  *@retvel        ÎÞ
+  40          *****************************************************************************************/
+  41          void Delayms(uint c)
+  42          {
+  43   1          uchar a,b;
+  44   1              for (; c>0; c--)
+  45   1              {
+  46   2                       for (b=199;b>0;b--)
+  47   2                       {
+  48   3                              for(a=1;a>0;a--);
+  49   3                       }      
+  50   2              }       
+  51   1      }
+  52          
+  53          /****************************************************************************************
+  54                  *@brief         LCDÐ´ÃüÁîº¯Êý
+C51 COMPILER V9.56.0.0   BSP_LCD1602                                                       02/22/2017 17:59:04 PAGE 2   
+
+  55                  *@param         ÐÎ²Îcommand´ú±íÐ´½øµÄÃüÁî
+  56                  *@retvel        ÎÞ
+  57          *****************************************************************************************/
+  58          void LCD_WRITE_COM(uchar commend)
+  59          {
+  60   1              EN = 0 ; 
+  61   1              RW = 0 ; 
+  62   1              RS = 0 ; 
+  63   1              
+  64   1              DATA_PORT = commend ;
+  65   1              Delayms(1) ; 
+  66   1              
+  67   1              EN = 1 ; 
+  68   1              Delayms(5) ; 
+  69   1              EN = 0 ;  
+  70   1      }
+  71          
+  72          /****************************************************************************************
+  73                  *@brief         LCDÐ´Êý¾Ýº¯Êý
+  74                  *@param         ÐÎ²Îdate´ú±íÐ´½øµÄÊý¾Ý
+  75                  *@retvel        ÎÞ
+  76          *****************************************************************************************/
+  77          void LCD_WRITE_DATA(uchar date)
+  78          {
+  79   1              EN = 0 ; 
+  80   1              RW = 0 ; 
+  81   1              RS = 1 ; 
+  82   1              
+  83   1              DATA_PORT = date ;
+  84   1              Delayms(1) ; 
+  85   1              
+  86   1              EN = 1 ; 
+  87   1              Delayms(5) ; 
+  88   1              EN = 0 ;  
+  89   1      }
+  90          
+  91          /****************************************************************************************
+  92                  *@brief         LCD³õÊ¼»¯º¯Êý
+  93                  *@param         ÎÞ
+  94                  *@retvel        ÎÞ
+  95          *****************************************************************************************/
+  96          void LCD_Init(void)
+  97          {
+  98   1              LCD_WRITE_COM(0x38) ;   //¿ªÏÔÊ¾
+  99   1              LCD_WRITE_COM(0x0c) ;   //¿ªÏÔÊ¾²»ÏÔÊ¾¹â±ê
+ 100   1              LCD_WRITE_COM(0x06) ;   //Ð´Ò»¸öÖ¸Õë¼ÓÒ»
+ 101   1              LCD_WRITE_COM(0x01) ;   //ÇåÆÁ
+ 102   1              LCD_WRITE_COM(0x80) ;   //ÉèÖÃÊý¾ÝÖ¸ÕëÆðµã
+ 103   1      }
+ 104          
+ 105          /****************************************************************************************
+ 106                  *@brief         LCDÏÔÊ¾ÎÂ¶Èº¯Êý
+ 107                  *@param         ÎÞ
+ 108                  *@retvel        ÎÞ
+ 109          *****************************************************************************************/
+ 110          void display_temperature()
+ 111          {
+ 112   1              bit neg_sign = 0 ;
+ 113   1              uchar display_buff[6] ; 
+ 114   1              uchar i ;
+ 115   1              if((temp_value[1]&0xf0) == 0xf0 )                               // Èç¹û½ÓÊÕµ½µÄÎÂ¶ÈÊÇ¸ºÊý£¬Ôò½«²¹Âë×ª»»³ÉÔ­Âë £»
+ 116   1              {
+C51 COMPILER V9.56.0.0   BSP_LCD1602                                                       02/22/2017 17:59:04 PAGE 3   
+
+ 117   2                      temp_value[1] = ~temp_value[1] ; 
+ 118   2                      temp_value[0] = ~temp_value[0] + 0x01 ; 
+ 119   2                      neg_sign = 1 ;
+ 120   2              }
+ 121   1              
+ 122   1              convert_value[0] = df_Table[temp_value[0]&0x0f]; 
+ 123   1              current_temp = ((temp_value[0]&0xf0)>>4)|((temp_value[1]&0x0f)<<4) ; 
+ 124   1              convert_value[3] = current_temp/100 ; 
+ 125   1              convert_value[2] = current_temp%100/10 ; 
+ 126   1              convert_value[1] = current_temp%10 ; 
+ 127   1              if(neg_sign == 1)
+ 128   1              {
+ 129   2                      display_buff[0] = '-' ;
+ 130   2                      neg_sign = 0 ;
+ 131   2              }
+ 132   1              else
+ 133   1                      display_buff[0] = ' ' ;
+ 134   1                      
+ 135   1              if(convert_value[3] == 0 )
+ 136   1                      display_buff[1] = ' ' ; 
+ 137   1              else
+ 138   1                      display_buff[1] = convert_value[3]+'0' ;
+ 139   1              
+ 140   1              if(convert_value[2] == 0 && convert_value[3] == 0 )
+ 141   1                      display_buff[2] = ' ' ; 
+ 142   1              else
+ 143   1                      display_buff[2] = convert_value[2]+'0' ;
+ 144   1              
+ 145   1              display_buff[3] = convert_value[1]+'0' ;
+ 146   1              display_buff[4] = '.' ;
+ 147   1              display_buff[5] = convert_value[0]+'0' ;
+ 148   1              LCD_WRITE_COM(0x80+0x40) ;
+ 149   1              for(i=0;i<6;i++)
+ 150   1                      LCD_WRITE_DATA(display_buff[i]) ;
+ 151   1          LCD_WRITE_COM(0x80+0x40+0x07) ;
+ 152   1              LCD_WRITE_DATA(0xdf) ;
+ 153   1              LCD_WRITE_DATA('C') ;
+ 154   1              LCD_WRITE_COM(0x80) ;   
+ 155   1      }
+ 156          
+ 157          /****************************************************************************************
+ 158                  *@brief         ×î´ó°²È«ÎÂ¶ÈÏÔÊ¾º¯Êý
+ 159                  *@param         ÎÞ
+ 160                  *@retvel        ÎÞ
+ 161          *****************************************************************************************/
+ 162          void display_max()
+ 163          {
+ 164   1              uchar display_buff[6] ; 
+ 165   1              uchar i ;
+ 166   1              
+ 167   1              convert_max[0] = convert_value[0];  
+ 168   1              convert_max[3] = max_safe_number/100 ; 
+ 169   1              convert_max[2] = max_safe_number%100/10 ; 
+ 170   1              convert_max[1] = max_safe_number%10 ; 
+ 171   1                      
+ 172   1              if(convert_max[3] == 0 )
+ 173   1                      display_buff[0] = ' ' ; 
+ 174   1              else
+ 175   1                      display_buff[0] = convert_max[3]+'0' ;
+ 176   1              
+ 177   1              if(convert_max[2] == 0 && convert_max[3] == 0 )
+ 178   1                      display_buff[1] = ' ' ; 
+C51 COMPILER V9.56.0.0   BSP_LCD1602                                                       02/22/2017 17:59:04 PAGE 4   
+
+ 179   1              else
+ 180   1                      display_buff[1] = convert_max[2]+'0' ;
+ 181   1              
+ 182   1              display_buff[2] =convert_max[1]+'0' ;
+ 183   1              display_buff[3] = '.' ;
+ 184   1              display_buff[4] = convert_max[0]+'0' ;
+ 185   1              LCD_WRITE_COM(0x80+0x40) ;
+ 186   1              for(i=0;i<5;i++)
+ 187   1                      LCD_WRITE_DATA(display_buff[i]) ;
+ 188   1          LCD_WRITE_COM(0x80+0x40+0x07) ;
+ 189   1              LCD_WRITE_DATA(0xdf) ;
+ 190   1              LCD_WRITE_DATA('C') ;
+ 191   1              LCD_WRITE_COM(0x80) ;   
+ 192   1      }
+ 193          
+ 194          /****************************************************************************************
+ 195                  *@brief         ×îÐ¡°²È«ÎÂ¶ÈÏÔÊ¾º¯Êý
+ 196                  *@param         ÎÞ
+ 197                  *@retvel        ÎÞ
+ 198          *****************************************************************************************/
+ 199          void display_min()
+ 200          {
+ 201   1              uchar display_buff[6] ; 
+ 202   1              uchar i ;
+ 203   1              
+ 204   1              convert_min[0] = convert_value[0];  
+ 205   1              convert_min[3] = min_safe_number/100 ; 
+ 206   1              convert_min[2] = min_safe_number%100/10 ; 
+ 207   1              convert_min[1] = min_safe_number%10 ; 
+ 208   1                      
+ 209   1              if(convert_min[3] == 0 )
+ 210   1                      display_buff[0] = ' ' ; 
+ 211   1              else
+ 212   1                      display_buff[0] = convert_min[3]+'0' ;
+ 213   1              
+ 214   1              if(convert_min[2] == 0 && convert_min[3] == 0 )
+ 215   1                      display_buff[1] = ' ' ; 
+ 216   1              else
+ 217   1                      display_buff[1] = convert_min[2]+'0' ;
+ 218   1              
+ 219   1              display_buff[2] =convert_min[1]+'0' ;
+ 220   1              display_buff[3] = '.' ;
+ 221   1              display_buff[4] = convert_min[0]+'0' ;
+ 222   1              LCD_WRITE_COM(0x80+0x40) ;
+ 223   1              for(i=0;i<5;i++)
+ 224   1                      LCD_WRITE_DATA(display_buff[i]) ;
+ 225   1          LCD_WRITE_COM(0x80+0x40+0x07) ;
+ 226   1              LCD_WRITE_DATA(0xdf) ;
+ 227   1              LCD_WRITE_DATA('C') ;
+ 228   1              LCD_WRITE_COM(0x80) ;   
+ 229   1      }
+ 230          
+ 231          /****************************************************************************************
+ 232                  *@brief         °´¼üÇÐ»»ÏÔÊ¾ÀàÐÍ
+ 233                  *@param         ÎÞ
+ 234                  *@retvel        ÎÞ
+ 235          *****************************************************************************************/
+ 236          void Mode_switch()
+ 237          {
+ 238   1              uint i ; 
+ 239   1              P3 = 0x00 ;                                                                             //±¨¾¯Æ÷³õÊ¼»¯
+ 240   1              switch(status_deal(key_check()))                                //¼ì²â°´¼ü×´Ì¬
+C51 COMPILER V9.56.0.0   BSP_LCD1602                                                       02/22/2017 17:59:04 PAGE 5   
+
+ 241   1              {
+ 242   2                      case 0:                                                                         //Çé¿ö0ÊÇÏÔÊ¾µ±Ç°µÄÎÂ¶ÈÖµ
+ 243   2                              LCD_Init() ;                                                    //LCD³õÊ¼»¯º¯Êý
+ 244   2                              while((dis_type==0)&&(P1==0xff))                
+ 245   2                              {
+ 246   3                                      read_temperature() ;                            //¶ÁÈ¡µ±Ç°¼ì²âµ½µÄÎÂ¶ÈÖµ
+ 247   3                                      if(read_temp_is_ok==1)                          //¼ì²âÊý¾Ý³É¹¦
+ 248   3                                      {
+ 249   4                                              for( i=0 ; i<13 ; i++ )
+ 250   4                                                      LCD_WRITE_DATA(title_1[i]) ;//ËµÃ÷µ±Ç°ÎÂ¶ÈÖµµÄÀàÐÍ
+ 251   4                                              display_temperature() ;                 //ÏÔÊ¾ÎÂ¶ÈÖµ
+ 252   4                                      }
+ 253   3                                      if((current_temp>max_safe_number)||(current_temp<min_safe_number)) //Èç¹ûµ±Ç°ÎÂ¶ÈÖµ²»ÔÚ°²È«ÎÂ¶È·¶Î§ÄÚ£
+             -¬±¨¾¯
+ 254   3                                      {
+ 255   4                                              Alarm(90);
+ 256   4                                              Alarm(120);
+ 257   4                                      }
+ 258   3                              }
+ 259   2                              break ;
+ 260   2                              
+ 261   2                      case 1:                                                                                                                 //Çé¿ö1ÊÇÏÔÊ¾×î¸ß°²È«ÎÂ¶È²¢¿ÉÍ¨¹ý°´¼ü½øÐÐÉèÖÃ
+ 262   2                              LCD_Init() ;                                                                                            //lcd³õÊ¼»¯
+ 263   2                              while((dis_type==1)&&((P1==0xff)||(P1==0xfd)||(P1==0xfb)))
+ 264   2                                      {       
+ 265   3                                              safe_temp_set(key_check()) ;                                            //¼ì²âÉèÖÃ°´¼ü×´Ì¬
+ 266   3                                              for( i=0 ; i<14 ; i++ )
+ 267   3                                                      LCD_WRITE_DATA(title_2[i]) ;                                    //ÏÔÊ¾µ±Ç°ÎÂ¶ÈÖµÊÇ×î¸ß°²È«ÎÂ¶È
+ 268   3                                              display_max() ; 
+ 269   3                                      }
+ 270   2                                      break ;
+ 271   2                      
+ 272   2                      case 2:                                                                                                                 //Çé¿ö1ÊÇÏÔÊ¾×îµÍ°²È«ÎÂ¶È²¢¿ÉÍ¨¹ý°´¼ü½øÐÐÉèÖÃ
+ 273   2                              LCD_Init() ;
+ 274   2                              while((dis_type==2)&&((P1==0xff)||(P1==0xfd)||(P1==0xfb)))
+ 275   2                                      {       
+ 276   3                                              safe_temp_set(key_check()) ;
+ 277   3                                              for( i=0 ; i<14 ; i++ )
+ 278   3                                                      LCD_WRITE_DATA(title_3[i]) ;
+ 279   3                                              display_min() ;
+ 280   3                                      }
+ 281   2                                      break ;                                 
+ 282   2              }
+ 283   1      }
+ 284          
+ 285          
+ 286          
+ 287          
+ 288          
+ 289          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    745    ----
+   CONSTANT SIZE    =     16    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     54      20
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       1
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
