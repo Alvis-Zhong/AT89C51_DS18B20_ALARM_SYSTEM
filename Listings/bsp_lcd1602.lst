@@ -1,4 +1,4 @@
-C51 COMPILER V9.56.0.0   BSP_LCD1602                                                       02/22/2017 17:59:04 PAGE 1   
+C51 COMPILER V9.56.0.0   BSP_LCD1602                                                       02/22/2017 18:47:10 PAGE 1   
 
 
 C51 COMPILER V9.56.0.0, COMPILATION OF MODULE BSP_LCD1602
@@ -62,7 +62,7 @@ line level    source
   52          
   53          /****************************************************************************************
   54                  *@brief         LCD写命令函数
-C51 COMPILER V9.56.0.0   BSP_LCD1602                                                       02/22/2017 17:59:04 PAGE 2   
+C51 COMPILER V9.56.0.0   BSP_LCD1602                                                       02/22/2017 18:47:10 PAGE 2   
 
   55                  *@param         形参command代表写进的命令
   56                  *@retvel        无
@@ -126,7 +126,7 @@ line level    source
  114   1              uchar i ;
  115   1              if((temp_value[1]&0xf0) == 0xf0 )                               // 如果接收到的温度是负数，则将补码转换成原码 ；
  116   1              {
-C51 COMPILER V9.56.0.0   BSP_LCD1602                                                       02/22/2017 17:59:04 PAGE 3   
+C51 COMPILER V9.56.0.0   BSP_LCD1602                                                       02/22/2017 18:47:10 PAGE 3   
 
  117   2                      temp_value[1] = ~temp_value[1] ; 
  118   2                      temp_value[0] = ~temp_value[0] + 0x01 ; 
@@ -190,7 +190,7 @@ line level    source
  176   1              
  177   1              if(convert_max[2] == 0 && convert_max[3] == 0 )
  178   1                      display_buff[1] = ' ' ; 
-C51 COMPILER V9.56.0.0   BSP_LCD1602                                                       02/22/2017 17:59:04 PAGE 4   
+C51 COMPILER V9.56.0.0   BSP_LCD1602                                                       02/22/2017 18:47:10 PAGE 4   
 
  179   1              else
  180   1                      display_buff[1] = convert_max[2]+'0' ;
@@ -254,7 +254,7 @@ line level    source
  238   1              uint i ; 
  239   1              P3 = 0x00 ;                                                                             //报警器初始化
  240   1              switch(status_deal(key_check()))                                //检测按键状态
-C51 COMPILER V9.56.0.0   BSP_LCD1602                                                       02/22/2017 17:59:04 PAGE 5   
+C51 COMPILER V9.56.0.0   BSP_LCD1602                                                       02/22/2017 18:47:10 PAGE 5   
 
  241   1              {
  242   2                      case 0:                                                                         //情况0是显示当前的温度值

@@ -425,6 +425,16 @@
             </File>
           </Files>
         </Group>
+        <Group>
+          <GroupName>README</GroupName>
+          <Files>
+            <File>
+              <FileName>Readme.txt</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\readme\Readme.txt</FilePath>
+            </File>
+          </Files>
+        </Group>
       </Groups>
     </Target>
   </Targets>
