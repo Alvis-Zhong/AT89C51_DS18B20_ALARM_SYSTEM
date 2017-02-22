@@ -1,4 +1,4 @@
-C51 COMPILER V9.56.0.0   BSP_DS18B20                                                       02/22/2017 17:59:04 PAGE 1   
+C51 COMPILER V9.56.0.0   BSP_DS18B20                                                       02/22/2017 18:37:00 PAGE 1   
 
 
 C51 COMPILER V9.56.0.0, COMPILATION OF MODULE BSP_DS18B20
@@ -62,7 +62,7 @@ line level    source
   52   1              uchar i ;                                                                                               
   53   1              for(i=0;i<8;i++)
   54   1              {
-C51 COMPILER V9.56.0.0   BSP_DS18B20                                                       02/22/2017 17:59:04 PAGE 2   
+C51 COMPILER V9.56.0.0   BSP_DS18B20                                                       02/22/2017 18:37:00 PAGE 2   
 
   55   2                      DQ = 0 ; 
   56   2                      DQ = dat & 0x01 ; 
@@ -110,12 +110,12 @@ line level    source
   98   2              }
   99   1              else
  100   1              {
- 101   2                      ds18b20_write_byte(0xcc) ; 
- 102   2                      ds18b20_write_byte(0x44) ; 
- 103   2                      ds18b20_init() ; 
- 104   2                      ds18b20_write_byte(0xcc) ; 
+ 101   2              ds18b20_write_byte(0xcc) ;                              //不提供64位ROM编码，因为只有一个DS18B20器件
+ 102   2                      ds18b20_write_byte(0x44) ;                              //读取寄存器 ；
+ 103   2                      ds18b20_init() ;                                                //初始化
+ 104   2                      ds18b20_write_byte(0xcc) ;                              
  105   2                      ds18b20_write_byte(0xbe) ; 
- 106   2                      temp_value[0] =ds18b20_read_byte() ; 
+ 106   2                      temp_value[0] =ds18b20_read_byte() ;    //读取寄存器，DS18B20从最低位开始传送数据值
  107   2                      temp_value[1] =ds18b20_read_byte() ;
  108   2                      read_temp_is_ok = 1 ;
  109   2              }
@@ -126,7 +126,7 @@ line level    source
  114          
  115          
  116          
-C51 COMPILER V9.56.0.0   BSP_DS18B20                                                       02/22/2017 17:59:04 PAGE 3   
+C51 COMPILER V9.56.0.0   BSP_DS18B20                                                       02/22/2017 18:37:00 PAGE 3   
 
  117          
  118          

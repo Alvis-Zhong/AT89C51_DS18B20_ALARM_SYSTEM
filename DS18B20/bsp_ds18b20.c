@@ -98,12 +98,12 @@ void read_temperature()
 	}
 	else
 	{
-		ds18b20_write_byte(0xcc) ; 
-		ds18b20_write_byte(0x44) ; 
-		ds18b20_init() ; 
-		ds18b20_write_byte(0xcc) ; 
+	ds18b20_write_byte(0xcc) ;         			//不提供64位ROM编码，因为只有一个DS18B20器件
+		ds18b20_write_byte(0x44) ; 				//读取寄存器 ；
+		ds18b20_init() ; 						//初始化
+		ds18b20_write_byte(0xcc) ; 				
 		ds18b20_write_byte(0xbe) ; 
-		temp_value[0] =ds18b20_read_byte() ; 
+		temp_value[0] =ds18b20_read_byte() ; 	//读取寄存器，DS18B20从最低位开始传送数据值
 		temp_value[1] =ds18b20_read_byte() ;
 		read_temp_is_ok = 1 ;
 	}
